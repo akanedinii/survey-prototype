@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>アンケート | 日本酒原価酒蔵</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* ── Palette ── */
+  --black:#282828;
+  --g8:#3F4042;--g7:#54565A;--g6:#6A6D71;--g5:#7F8389;
+  --g4:#949AA0;--g3:#AAB0B8;--g2:#BFC7D0;--g1:#D5DDE7;
+  --light-gray:#EAF4FF;--white:#FFFFFF;
+  --bg8:#56698F;--bg7:#687A9D;--bg6:#7B8CAB;--bg5:#8D9DB9;
+  --bg4:#A0AFC7;--bg3:#B2C0D5;--bg2:#C5D1E3;--bg1:#D7E3F1;
+  --attention:#FF0046;
+  /* ── Semantic ── */
+  --primary:var(--bg8);
+  --primary-light:var(--bg4);
+  --bg:var(--light-gray);
+  --card:var(--white);
+  --text:var(--black);
+  --text-sub:var(--g6);
+  --border:var(--g1);
+  --selected-bg:var(--bg1);
+  --radius:12px;
+}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN",Meiryo,sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100dvh;overflow-x:hidden;
+  display:flex;flex-direction:column;
+}
+
+/* ── Header ── */
+.header{
+  background:var(--black);color:var(--white);
+  padding:16px 20px 12px;text-align:center;
+  position:sticky;top:0;z-index:100;
+}
+.header h1{font-size:14px;font-weight:600;letter-spacing:.04em;opacity:.9}
+.header .store-name{font-size:11px;color:var(--g4);margin-top:2px}
+
+/* ── Progress ── */
+.progress-wrap{
+  background:var(--white);padding:12px 20px 8px;
+  position:sticky;top:52px;z-index:99;
+  border-bottom:1px solid var(--border);
+}
+.progress-info{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.progress-label{font-size:11px;color:var(--text-sub)}
+.progress-count{font-size:11px;color:var(--primary);font-weight:700}
+.progress-bar{height:4px;background:var(--g2);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--bg8),var(--bg4));border-radius:2px;transition:width .4s ease}
+
+/* ── Main ── */
+.main{flex:1;padding:20px 16px 120px;position:relative}
+
+/* ── Step ── */
+.step{
+  display:none;animation:fadeUp .35s ease;
+}
+.step.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+.step-section{font-size:11px;color:var(--bg7);font-weight:700;letter-spacing:.06em;margin-bottom:6px;text-transform:uppercase}
+.step-question{font-size:17px;font-weight:700;line-height:1.55;margin-bottom:4px;color:var(--black)}
+.step-note{font-size:12px;color:var(--g5);margin-bottom:20px;line-height:1.5}
+.required{
+  display:inline-block;font-size:10px;background:var(--attention);color:#fff;
+  padding:1px 6px;border-radius:4px;margin-left:6px;vertical-align:middle;font-weight:600;
+}
+.optional{
+  display:inline-block;font-size:10px;background:var(--g4);color:#fff;
+  padding:1px 6px;border-radius:4px;margin-left:6px;vertical-align:middle;font-weight:600;
+}
+
+/* ── Radio / Checkbox Cards ── */
+.choice-list{display:flex;flex-direction:column;gap:8px}
+.choice-item{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 16px;background:var(--card);
+  border:2px solid var(--border);border-radius:var(--radius);
+  cursor:pointer;transition:all .2s;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;font-size:14px;line-height:1.4;color:var(--g8);
+}
+.choice-item:active{transform:scale(.98)}
+.choice-item.selected{border-color:var(--primary);background:var(--selected-bg);color:var(--black)}
+.choice-item .indicator{
+  width:22px;height:22px;border-radius:50%;
+  border:2px solid var(--g2);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;
+}
+.choice-item.selected .indicator{border-color:var(--primary);background:var(--primary)}
+.choice-item.selected .indicator::after{
+  content:'';width:8px;height:8px;background:#fff;border-radius:50%;
+}
+.choice-item.multi .indicator{border-radius:5px}
+.choice-item.multi.selected .indicator::after{
+  content:'✓';width:auto;height:auto;background:none;
+  color:#fff;font-size:13px;font-weight:700;border-radius:0;
+}
+
+/* ── Satisfaction Scale ── */
+.sat-scale{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.sat-btn{
+  flex:1;min-width:0;padding:12px 4px;
+  background:var(--card);border:2px solid var(--border);border-radius:var(--radius);
+  text-align:center;cursor:pointer;transition:all .2s;
+  -webkit-tap-highlight-color:transparent;
+}
+.sat-btn:active{transform:scale(.95)}
+.sat-btn .sat-emoji{font-size:24px;display:block;margin-bottom:4px}
+.sat-btn .sat-label{font-size:10px;color:var(--g5);line-height:1.3;display:block}
+.sat-btn.selected{border-color:var(--primary);background:var(--selected-bg)}
+.sat-btn.selected .sat-label{color:var(--bg8);font-weight:700}
+
+/* ── NPS ── */
+.nps-row{display:flex;gap:4px;margin-bottom:8px}
+.nps-btn{
+  flex:1;aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+  background:var(--card);border:2px solid var(--border);border-radius:10px;
+  font-size:15px;font-weight:700;color:var(--g6);cursor:pointer;transition:all .2s;
+  -webkit-tap-highlight-color:transparent;
+}
+.nps-btn:active{transform:scale(.9)}
+.nps-btn.selected{border-color:var(--primary);background:var(--primary);color:#fff}
+.nps-labels{display:flex;justify-content:space-between;padding:0 4px}
+.nps-labels span{font-size:10px;color:var(--g5)}
+
+/* ── Yes/No ── */
+.yn-row{display:flex;gap:10px}
+.yn-btn{
+  flex:1;padding:18px;text-align:center;
+  background:var(--card);border:2px solid var(--border);border-radius:var(--radius);
+  font-size:15px;font-weight:600;color:var(--g7);cursor:pointer;transition:all .2s;
+  -webkit-tap-highlight-color:transparent;
+}
+.yn-btn:active{transform:scale(.97)}
+.yn-btn.selected{border-color:var(--primary);background:var(--selected-bg);color:var(--primary)}
+
+/* ── Textarea ── */
+.text-input{
+  width:100%;padding:14px 16px;font-size:15px;
+  border:2px solid var(--border);border-radius:var(--radius);
+  background:var(--card);resize:vertical;min-height:100px;
+  font-family:inherit;color:var(--text);
+  transition:border-color .2s;line-height:1.5;
+}
+.text-input:focus{outline:none;border-color:var(--bg6)}
+.text-input::placeholder{color:var(--g3)}
+
+/* ── Sub question ── */
+.sub-question{
+  margin-top:20px;padding-top:20px;
+  border-top:1px solid var(--border);
+}
+.sub-label{font-size:14px;font-weight:600;margin-bottom:10px;line-height:1.5;color:var(--g7)}
+
+/* ── Footer Nav ── */
+.footer-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--white);border-top:1px solid var(--border);
+  padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom));
+  display:flex;gap:10px;z-index:100;
+}
+.btn{
+  flex:1;padding:15px;border:none;border-radius:var(--radius);
+  font-size:15px;font-weight:700;cursor:pointer;
+  transition:all .2s;-webkit-tap-highlight-color:transparent;
+}
+.btn:active{transform:scale(.97)}
+.btn-back{background:var(--g1);color:var(--g6)}
+.btn-next{background:var(--black);color:var(--white)}
+.btn-next:disabled{opacity:.3;cursor:not-allowed;transform:none}
+.btn-submit{background:var(--bg8);color:var(--white)}
+
+/* ── Complete ── */
+.complete-screen{text-align:center;padding:60px 20px}
+.complete-icon{font-size:64px;margin-bottom:16px}
+.complete-title{font-size:22px;font-weight:800;margin-bottom:8px;color:var(--black)}
+.complete-msg{font-size:14px;color:var(--g6);line-height:1.7}
+
+/* ── Intro ── */
+.intro-card{
+  background:var(--card);border-radius:var(--radius);
+  padding:32px 24px;text-align:center;
+  box-shadow:0 2px 8px rgba(40,40,40,.08);
+}
+.intro-icon{font-size:48px;margin-bottom:12px}
+.intro-title{font-size:20px;font-weight:800;margin-bottom:8px;color:var(--black)}
+.intro-desc{font-size:13px;color:var(--g6);line-height:1.7;margin-bottom:24px}
+.intro-time{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--bg7);
+  background:var(--bg1);padding:8px 16px;border-radius:20px;
+}
+
+/* ── Password Gate ── */
+.pw-overlay{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--black);
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity .4s ease;
+}
+.pw-overlay.hidden{opacity:0;pointer-events:none}
+.pw-card{
+  width:min(320px,90vw);background:var(--g8);border-radius:16px;
+  padding:36px 28px;text-align:center;
+}
+.pw-card h2{font-size:16px;color:var(--white);font-weight:700;margin-bottom:6px}
+.pw-card p{font-size:12px;color:var(--g4);margin-bottom:24px}
+.pw-input{
+  width:100%;padding:14px 16px;font-size:15px;
+  border:2px solid var(--g7);border-radius:var(--radius);
+  background:var(--black);color:var(--white);
+  font-family:inherit;text-align:center;letter-spacing:.1em;
+  transition:border-color .2s;
+}
+.pw-input:focus{outline:none;border-color:var(--bg6)}
+.pw-input::placeholder{color:var(--g6);letter-spacing:0}
+.pw-btn{
+  width:100%;margin-top:12px;padding:14px;
+  background:var(--bg8);color:var(--white);
+  border:none;border-radius:var(--radius);
+  font-size:15px;font-weight:700;cursor:pointer;
+  font-family:inherit;transition:background .2s;
+}
+.pw-btn:active{background:var(--bg7)}
+.pw-error{font-size:12px;color:var(--attention);margin-top:10px;min-height:18px}
+</style>
+</head>
+<body>
+
+<!-- Password Gate -->
+<div class="pw-overlay" id="pwOverlay">
+  <div class="pw-card">
+    <h2>プロトタイプ確認用</h2>
+    <p>パスワードを入力してください</p>
+    <input type="password" class="pw-input" id="pwInput" placeholder="パスワード" autocomplete="off">
+    <button class="pw-btn" id="pwBtn">確認</button>
+    <div class="pw-error" id="pwError"></div>
+  </div>
+</div>
+
+<div class="header">
+  <h1>ご来店アンケート</h1>
+  <div class="store-name">日本酒原価酒蔵</div>
+</div>
+
+<div class="progress-wrap" id="progressWrap" style="display:none">
+  <div class="progress-info">
+    <span class="progress-label" id="progressLabel"></span>
+    <span class="progress-count" id="progressCount"></span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+</div>
+
+<div class="main" id="main">
+  <!-- Step 0: Intro -->
+  <div class="step active" data-step="0">
+    <div class="intro-card">
+      <div class="intro-icon">🍶</div>
+      <div class="intro-title">本日はご来店<br>ありがとうございました</div>
+      <div class="intro-desc">
+        サービス向上のため、簡単なアンケートにご協力をお願いいたします。<br>
+        いただいたご意見は今後の改善に活かしてまいります。
+      </div>
+      <div class="intro-time">🕐 所要時間：約3分</div>
+    </div>
+  </div>
+
+  <!-- Step 1: 利用シーン -->
+  <div class="step" data-step="1">
+    <div class="step-section">ご利用について</div>
+    <div class="step-question">今回の利用形態を教えてください。<span class="required">必須</span></div>
+    <div class="step-note">1つ選択してください</div>
+    <div class="choice-list" id="q_usage">
+      <label class="choice-item" data-value="通常単品利用"><span class="indicator"></span>通常単品利用</label>
+      <label class="choice-item" data-value="宴会コース利用"><span class="indicator"></span>宴会コース利用</label>
+      <label class="choice-item" data-value="痛風鍋食べ放題利用"><span class="indicator"></span>痛風鍋食べ放題利用</label>
+      <label class="choice-item" data-value="時間無制限飲み放題利用"><span class="indicator"></span>時間無制限飲み放題利用</label>
+      <label class="choice-item" data-value="希少酒(飲み比べ)コース利用"><span class="indicator"></span>希少酒（飲み比べ）コース利用</label>
+      <label class="choice-item" data-value="おでん食べ放題"><span class="indicator"></span>おでん食べ放題</label>
+      <label class="choice-item" data-value="その他"><span class="indicator"></span>その他</label>
+    </div>
+  </div>
+
+  <!-- Step 2: 希少酒 決め手 (conditional) -->
+  <div class="step" data-step="2" data-condition="usage_kishu">
+    <div class="step-section">希少酒コースについて</div>
+    <div class="step-question">希少酒コースを予約した際、一番の決め手となった要素を1つ選択してください。<span class="required">必須</span></div>
+    <div class="step-note"></div>
+    <div class="choice-list" id="q_kishu_reason">
+      <label class="choice-item" data-value="取り扱い銘柄が魅力的だった"><span class="indicator"></span>取り扱い銘柄が魅力的だった</label>
+      <label class="choice-item" data-value="値段がリーズナブルだった"><span class="indicator"></span>値段がリーズナブルだった</label>
+      <label class="choice-item" data-value="季節限定酒があった"><span class="indicator"></span>季節限定酒があった</label>
+    </div>
+    <div class="sub-question">
+      <div class="sub-label">今回お目当てとした銘柄をご記載ください。<span class="optional">任意</span></div>
+      <textarea class="text-input" id="q_kishu_brand" placeholder="例：十四代、而今、花陽浴…"></textarea>
+    </div>
+  </div>
+
+  <!-- Step 3: 来店回数 -->
+  <div class="step" data-step="3">
+    <div class="step-section">ご来店について</div>
+    <div class="step-question">当店へのご来店は何回目ですか？<span class="required">必須</span></div>
+    <div class="step-note"></div>
+    <div class="yn-row" id="q_visit_count">
+      <div class="yn-btn" data-value="初めて">初めて</div>
+      <div class="yn-btn" data-value="2回目以上">2回目以上</div>
+    </div>
+  </div>
+
+  <!-- Step 4a: 認知経路 (初回) -->
+  <div class="step" data-step="4" data-condition="visit_first">
+    <div class="step-section">ご来店のきっかけ</div>
+    <div class="step-question">日本酒原価酒蔵を初めて知ったきっかけを教えてください。<span class="required">必須</span></div>
+    <div class="step-note">1つ選択してください</div>
+    <div class="choice-list" id="q_awareness">
+      <label class="choice-item" data-value="看板"><span class="indicator"></span>看板</label>
+      <label class="choice-item" data-value="知人紹介"><span class="indicator"></span>知人の紹介</label>
+      <label class="choice-item" data-value="チラシ"><span class="indicator"></span>チラシ</label>
+      <label class="choice-item" data-value="Google/Yahoo検索"><span class="indicator"></span>Google / Yahoo 検索</label>
+      <label class="choice-item" data-value="X"><span class="indicator"></span>X（旧Twitter）</label>
+      <label class="choice-item" data-value="Instagram"><span class="indicator"></span>Instagram</label>
+      <label class="choice-item" data-value="Facebook"><span class="indicator"></span>Facebook</label>
+      <label class="choice-item" data-value="YouTube"><span class="indicator"></span>YouTube</label>
+      <label class="choice-item" data-value="食べログ"><span class="indicator"></span>食べログ</label>
+      <label class="choice-item" data-value="ホットペッパー"><span class="indicator"></span>ホットペッパー</label>
+      <label class="choice-item" data-value="雑誌/テレビ/ラジオ"><span class="indicator"></span>雑誌 / テレビ / ラジオ</label>
+      <label class="choice-item" data-value="覚えていない"><span class="indicator"></span>覚えていない</label>
+      <label class="choice-item" data-value="その他"><span class="indicator"></span>その他</label>
+    </div>
+  </div>
+
+  <!-- Step 4b: 再来店経緯 (リピーター) -->
+  <div class="step" data-step="5" data-condition="visit_repeat">
+    <div class="step-section">ご来店のきっかけ</div>
+    <div class="step-question">今回来店した理由であてはまるものを全て選択してください。<span class="required">必須</span></div>
+    <div class="step-note">複数選択可</div>
+    <div class="choice-list" id="q_return_reason">
+      <label class="choice-item multi" data-value="アプリ通知/クーポン"><span class="indicator"></span>アプリ通知 / クーポン</label>
+      <label class="choice-item multi" data-value="X"><span class="indicator"></span>X（旧Twitter）</label>
+      <label class="choice-item multi" data-value="Instagram"><span class="indicator"></span>Instagram</label>
+      <label class="choice-item multi" data-value="近くを通った"><span class="indicator"></span>近くを通りかかった</label>
+      <label class="choice-item multi" data-value="知人関連"><span class="indicator"></span>知人に誘われた / 連れて来た</label>
+      <label class="choice-item multi" data-value="LINE"><span class="indicator"></span>LINE</label>
+      <label class="choice-item multi" data-value="季節の日本酒"><span class="indicator"></span>季節の日本酒が飲みたかった</label>
+      <label class="choice-item multi" data-value="前回印象"><span class="indicator"></span>前回の印象が良かった</label>
+      <label class="choice-item multi" data-value="会いたいスタッフ"><span class="indicator"></span>会いたいスタッフがいた</label>
+      <label class="choice-item multi" data-value="いずれも当てはまらない"><span class="indicator"></span>いずれも当てはまらない</label>
+    </div>
+  </div>
+
+  <!-- Step 6: 総合満足度 -->
+  <div class="step" data-step="6">
+    <div class="step-section">満足度</div>
+    <div class="step-question">総合満足度を教えてください。<span class="required">必須</span></div>
+    <div class="step-note"></div>
+    <div class="sat-scale" id="q_overall">
+      <div class="sat-btn" data-value="-100"><span class="sat-emoji">😞</span><span class="sat-label">大変<br>不満足</span></div>
+      <div class="sat-btn" data-value="-50"><span class="sat-emoji">😕</span><span class="sat-label">不満足</span></div>
+      <div class="sat-btn" data-value="0"><span class="sat-emoji">😐</span><span class="sat-label">どちらでも<br>ない</span></div>
+      <div class="sat-btn" data-value="50"><span class="sat-emoji">😊</span><span class="sat-label">満足</span></div>
+      <div class="sat-btn" data-value="100"><span class="sat-emoji">😍</span><span class="sat-label">大変<br>満足</span></div>
+    </div>
+  </div>
+
+  <!-- Step 7: おすすめ度 NPS -->
+  <div class="step" data-step="7">
+    <div class="step-section">満足度</div>
+    <div class="step-question">今回ご来店された店舗を日本酒好きの友人や同僚にお勧めしますか？<span class="required">必須</span></div>
+    <div class="step-note">1〜10で評価してください</div>
+    <div class="nps-row" id="q_nps">
+      <div class="nps-btn" data-value="1">1</div>
+      <div class="nps-btn" data-value="2">2</div>
+      <div class="nps-btn" data-value="3">3</div>
+      <div class="nps-btn" data-value="4">4</div>
+      <div class="nps-btn" data-value="5">5</div>
+      <div class="nps-btn" data-value="6">6</div>
+      <div class="nps-btn" data-value="7">7</div>
+      <div class="nps-btn" data-value="8">8</div>
+      <div class="nps-btn" data-value="9">9</div>
+      <div class="nps-btn" data-value="10">10</div>
+    </div>
+    <div class="nps-labels"><span>全くお勧めしない</span><span>強くお勧めする</span></div>
+  </div>
+
+  <!-- Step 8: 接客 -->
+  <div class="step" data-step="8">
+    <div class="step-section">スタッフについて</div>
+    <div class="step-question">スタッフの接客はいかがでしたか？<span class="required">必須</span></div>
+    <div class="step-note"></div>
+    <div class="sat-scale" id="q_service">
+      <div class="sat-btn" data-value="-100"><span class="sat-emoji">😞</span><span class="sat-label">大変<br>不満足</span></div>
+      <div class="sat-btn" data-value="-50"><span class="sat-emoji">😕</span><span class="sat-label">不満足</span></div>
+      <div class="sat-btn" data-value="0"><span class="sat-emoji">😐</span><span class="sat-label">どちらでも<br>ない</span></div>
+      <div class="sat-btn" data-value="50"><span class="sat-emoji">😊</span><span class="sat-label">満足</span></div>
+      <div class="sat-btn" data-value="100"><span class="sat-emoji">😍</span><span class="sat-label">大変<br>満足</span></div>
+    </div>
+  </div>
+
+  <!-- Step 9: 笑顔 -->
+  <div class="step" data-step="9">
+    <div class="step-section">スタッフについて</div>
+    <div class="step-question">スタッフは笑顔で元気よく接客していましたか？<span class="required">必須</span></div>
+    <div class="step-note"></div>
+    <div class="sat-scale" id="q_smile">
+      <div class="sat-btn" data-value="-100"><span class="sat-emoji">😞</span><span class="sat-label">大変<br>不満足</span></div>
+      <div class="sat-btn" data-value="-50"><span class="sat-emoji">😕</span><span class="sat-label">不満足</span></div>
+      <div class="sat-btn" data-value="0"><span class="sat-emoji">😐</span><span class="sat-label">どちらでも<br>ない</span></div>
+      <div class="sat-btn" data-value="50"><span class="sat-emoji">😊</span><span class="sat-label">満足</span></div>
+      <div class="sat-btn" data-value="100"><span class="sat-emoji">😍</span><span class="sat-label">大変<br>満足</span></div>
+    </div>
+  </div>
+
+  <!-- Step 10: 日本酒の説明 -->
+  <div class="step" data-step="10">
+    <div class="step-section">スタッフについて</div>
+    <div class="step-question">スタッフから日本酒の説明やオススメはありましたか？<span class="required">必須</span></div>
+    <div class="step-note"></div>
+    <div class="sat-scale" id="q_sake_explain">
+      <div class="sat-btn" data-value="-200"><span class="sat-emoji">😞</span><span class="sat-label">大変<br>不満足</span></div>
+      <div class="sat-btn" data-value="-100"><span class="sat-emoji">😕</span><span class="sat-label">不満足</span></div>
+      <div class="sat-btn" data-value="0"><span class="sat-emoji">😐</span><span class="sat-label">どちらでも<br>ない</span></div>
+      <div class="sat-btn" data-value="100"><span class="sat-emoji">😊</span><span class="sat-label">満足</span></div>
+      <div class="sat-btn" data-value="200"><span class="sat-emoji">😍</span><span class="sat-label">大変<br>満足</span></div>
+    </div>
+  </div>
+
+  <!-- Step 11: お料理ご注文 -->
+  <div class="step" data-step="11">
+    <div class="step-section">お料理について</div>
+    <div class="step-question">お料理はご注文されましたか？<span class="required">必須</span></div>
+    <div class="step-note"></div>
+    <div class="yn-row" id="q_food_ordered">
+      <div class="yn-btn" data-value="はい">はい</div>
+      <div class="yn-btn" data-value="いいえ">いいえ</div>
+    </div>
+  </div>
+
+  <!-- Step 12: お料理の味 (conditional) -->
+  <div class="step" data-step="12" data-condition="food_yes">
+    <div class="step-section">お料理について</div>
+    <div class="step-question">お料理の味はいかがでしたか？<span class="required">必須</span></div>
+    <div class="step-note"></div>
+    <div class="sat-scale" id="q_food_taste">
+      <div class="sat-btn" data-value="-100"><span class="sat-emoji">😞</span><span class="sat-label">大変<br>不満足</span></div>
+      <div class="sat-btn" data-value="-50"><span class="sat-emoji">😕</span><span class="sat-label">不満足</span></div>
+      <div class="sat-btn" data-value="0"><span class="sat-emoji">😐</span><span class="sat-label">どちらでも<br>ない</span></div>
+      <div class="sat-btn" data-value="50"><span class="sat-emoji">😊</span><span class="sat-label">満足</span></div>
+      <div class="sat-btn" data-value="100"><span class="sat-emoji">😍</span><span class="sat-label">大変<br>満足</span></div>
+    </div>
+    <div class="sub-question">
+      <div class="sub-label">不満足があった場合、料理名・特徴をご記載ください。<span class="optional">任意</span></div>
+      <textarea class="text-input" id="q_food_taste_note" placeholder="例：〇〇の味付けが濃すぎた"></textarea>
+    </div>
+  </div>
+
+  <!-- Step 13: お料理のボリューム (conditional) -->
+  <div class="step" data-step="13" data-condition="food_yes">
+    <div class="step-section">お料理について</div>
+    <div class="step-question">お料理のボリュームはいかがでしたか？<span class="required">必須</span></div>
+    <div class="step-note"></div>
+    <div class="sat-scale" id="q_food_volume">
+      <div class="sat-btn" data-value="-100"><span class="sat-emoji">😞</span><span class="sat-label">大変<br>不満足</span></div>
+      <div class="sat-btn" data-value="-50"><span class="sat-emoji">😕</span><span class="sat-label">不満足</span></div>
+      <div class="sat-btn" data-value="0"><span class="sat-emoji">😐</span><span class="sat-label">どちらでも<br>ない</span></div>
+      <div class="sat-btn" data-value="50"><span class="sat-emoji">😊</span><span class="sat-label">満足</span></div>
+      <div class="sat-btn" data-value="100"><span class="sat-emoji">😍</span><span class="sat-label">大変<br>満足</span></div>
+    </div>
+    <div class="sub-question">
+      <div class="sub-label">不満足を感じた場合、料理名・特徴をご記載ください。<span class="optional">任意</span></div>
+      <textarea class="text-input" id="q_food_volume_note" placeholder="例：〇〇の量が少なかった"></textarea>
+    </div>
+  </div>
+
+  <!-- Step 14: お料理の説明 (conditional) -->
+  <div class="step" data-step="14" data-condition="food_yes">
+    <div class="step-section">お料理について</div>
+    <div class="step-question">お料理提供時、食べ方やお料理についての説明はありましたか？<span class="required">必須</span></div>
+    <div class="step-note"></div>
+    <div class="yn-row" id="q_food_explain">
+      <div class="yn-btn" data-value="はい">はい</div>
+      <div class="yn-btn" data-value="いいえ">いいえ</div>
+    </div>
+  </div>
+
+  <!-- Step 15: 不満足な点 -->
+  <div class="step" data-step="15">
+    <div class="step-section">気になった点</div>
+    <div class="step-question">ご満足いただけなかった点がありましたら、あてはまる理由を全て選択してください。<span class="optional">任意</span></div>
+    <div class="step-note">複数選択可・該当なしの場合はそのまま次へ</div>
+    <div class="choice-list" id="q_dissatisfied">
+      <label class="choice-item multi" data-value="提供遅延"><span class="indicator"></span>料理・ドリンクの提供が遅い</label>
+      <label class="choice-item multi" data-value="従業員対応"><span class="indicator"></span>従業員の対応</label>
+      <label class="choice-item multi" data-value="モバイルオーダー"><span class="indicator"></span>モバイルオーダーの使いづらさ</label>
+      <label class="choice-item multi" data-value="席の広さ"><span class="indicator"></span>席の広さ</label>
+      <label class="choice-item multi" data-value="清掃"><span class="indicator"></span>清掃・清潔感</label>
+      <label class="choice-item multi" data-value="BGM"><span class="indicator"></span>BGM</label>
+      <label class="choice-item multi" data-value="調光"><span class="indicator"></span>店内の明るさ</label>
+      <label class="choice-item multi" data-value="騒音"><span class="indicator"></span>騒音</label>
+      <label class="choice-item multi" data-value="私語"><span class="indicator"></span>スタッフの私語</label>
+      <label class="choice-item multi" data-value="その他"><span class="indicator"></span>その他</label>
+    </div>
+    <div class="sub-question" id="q_dissatisfied_other_wrap" style="display:none">
+      <div class="sub-label">その他の内容をご記載ください。</div>
+      <textarea class="text-input" id="q_dissatisfied_other" placeholder="具体的な内容をご記入ください"></textarea>
+    </div>
+  </div>
+
+  <!-- Step 16: 素晴らしいスタッフ -->
+  <div class="step" data-step="16">
+    <div class="step-section">スタッフについて</div>
+    <div class="step-question">接客が素晴らしいと感じたスタッフはいましたか？<span class="optional">任意</span></div>
+    <div class="step-note">名前や特徴をご記載ください</div>
+    <textarea class="text-input" id="q_great_staff" placeholder="例：髪の長い女性のスタッフさん、名前は〇〇さん"></textarea>
+  </div>
+
+  <!-- Step 17: 不衛生点 -->
+  <div class="step" data-step="17">
+    <div class="step-section">清潔感について</div>
+    <div class="step-question">不衛生・清潔感がないと感じたものがあれば全て選択してください。<span class="optional">任意</span></div>
+    <div class="step-note">複数選択可・該当なしの場合はそのまま次へ</div>
+    <div class="choice-list" id="q_hygiene">
+      <label class="choice-item multi" data-value="トイレ"><span class="indicator"></span>トイレ</label>
+      <label class="choice-item multi" data-value="臭い"><span class="indicator"></span>臭い</label>
+      <label class="choice-item multi" data-value="身だしなみ"><span class="indicator"></span>スタッフの身だしなみ</label>
+      <label class="choice-item multi" data-value="床"><span class="indicator"></span>床</label>
+      <label class="choice-item multi" data-value="テーブル"><span class="indicator"></span>テーブル</label>
+      <label class="choice-item multi" data-value="シルバー類"><span class="indicator"></span>シルバー類（箸・カトラリー）</label>
+      <label class="choice-item multi" data-value="取り皿"><span class="indicator"></span>取り皿</label>
+      <label class="choice-item multi" data-value="入り口"><span class="indicator"></span>入り口</label>
+      <label class="choice-item multi" data-value="壁"><span class="indicator"></span>壁</label>
+      <label class="choice-item multi" data-value="メニュー"><span class="indicator"></span>メニュー表</label>
+      <label class="choice-item multi" data-value="グラス"><span class="indicator"></span>グラス</label>
+      <label class="choice-item multi" data-value="その他"><span class="indicator"></span>その他</label>
+    </div>
+    <div class="sub-question" id="q_hygiene_other_wrap" style="display:none">
+      <div class="sub-label">その他の内容をご記載ください。</div>
+      <textarea class="text-input" id="q_hygiene_other" placeholder="具体的な内容をご記入ください"></textarea>
+    </div>
+  </div>
+
+  <!-- Step 18: 再来店意向 -->
+  <div class="step" data-step="18">
+    <div class="step-section">再来店について</div>
+    <div class="step-question">3ヶ月以内にまた当店を利用したいと思いますか？<span class="required">必須</span></div>
+    <div class="step-note"></div>
+    <div class="sat-scale" id="q_revisit">
+      <div class="sat-btn" data-value="-100"><span class="sat-emoji">😞</span><span class="sat-label">全く<br>そう思わない</span></div>
+      <div class="sat-btn" data-value="-50"><span class="sat-emoji">😕</span><span class="sat-label">あまり<br>そう思わない</span></div>
+      <div class="sat-btn" data-value="0"><span class="sat-emoji">😐</span><span class="sat-label">どちらでも<br>ない</span></div>
+      <div class="sat-btn" data-value="50"><span class="sat-emoji">😊</span><span class="sat-label">そう<br>思う</span></div>
+      <div class="sat-btn" data-value="100"><span class="sat-emoji">😍</span><span class="sat-label">是非<br>そうしたい</span></div>
+    </div>
+  </div>
+
+  <!-- Step 19: イヤな所 -->
+  <div class="step" data-step="19">
+    <div class="step-section">最後に</div>
+    <div class="step-question">お店の「イヤなところ」がありましたら、教えてください。<span class="optional">任意</span></div>
+    <div class="step-note">率直なご意見をお聞かせください</div>
+    <textarea class="text-input" id="q_dislike" placeholder="自由にご記入ください"></textarea>
+  </div>
+
+  <!-- Step 20: コメント -->
+  <div class="step" data-step="20">
+    <div class="step-section">最後に</div>
+    <div class="step-question">ご意見やスタッフへの応援メッセージ等ございましたら、ご記載くださいませ。<span class="optional">任意</span></div>
+    <div class="step-note"></div>
+    <textarea class="text-input" id="q_comment" placeholder="自由にご記入ください"></textarea>
+  </div>
+
+  <!-- Complete -->
+  <div class="step" data-step="done">
+    <div class="complete-screen">
+      <div class="complete-icon">🎉</div>
+      <div class="complete-title">ご協力ありがとうございました！</div>
+      <div class="complete-msg">
+        いただいたご意見は<br>今後のサービス向上に<br>活かしてまいります。<br><br>
+        またのご来店を<br>心よりお待ちしております。
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer-nav" id="footerNav">
+  <button class="btn btn-back" id="btnBack" style="display:none">戻る</button>
+  <button class="btn btn-next" id="btnNext">アンケートを始める</button>
+</div>
+
+<script>
+// ── Password Gate ──
+const HASH = '34452458e784b588edea5fe9889bb9d11ed738e91ea007491f7cf398a3828ea1';
+async function sha256(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+(function(){
+  if(sessionStorage.getItem('pw_ok')==='1'){
+    document.getElementById('pwOverlay').classList.add('hidden');
+  }
+  const inp=document.getElementById('pwInput'),btn=document.getElementById('pwBtn'),err=document.getElementById('pwError');
+  async function check(){
+    const h=await sha256(inp.value);
+    if(h===HASH){
+      sessionStorage.setItem('pw_ok','1');
+      document.getElementById('pwOverlay').classList.add('hidden');
+    } else {
+      err.textContent='パスワードが違います';inp.value='';inp.focus();
+    }
+  }
+  btn.addEventListener('click',check);
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')check()});
+})();
+
+const answers = {};
+let currentStep = 0;
+const totalRequiredSteps = 15; // approximate for progress display
+
+const steps = document.querySelectorAll('.step');
+const btnNext = document.getElementById('btnNext');
+const btnBack = document.getElementById('btnBack');
+const progressWrap = document.getElementById('progressWrap');
+const progressFill = document.getElementById('progressFill');
+const progressLabel = document.getElementById('progressLabel');
+const progressCount = document.getElementById('progressCount');
+const footerNav = document.getElementById('footerNav');
+
+// Build ordered step list based on conditions
+function getVisibleSteps() {
+  const list = [0]; // intro
+  list.push(1); // 利用シーン
+  if (answers.usage === '希少酒(飲み比べ)コース利用') list.push(2);
+  list.push(3); // 来店回数
+  if (answers.visit_count === '初めて') list.push(4);
+  if (answers.visit_count === '2回目以上') list.push(5);
+  list.push(6, 7, 8, 9, 10); // 満足度 + スタッフ
+  list.push(11); // 料理注文
+  if (answers.food_ordered === 'はい') list.push(12, 13, 14);
+  list.push(15, 16, 17, 18, 19, 20);
+  return list;
+}
+
+function getStepIndex() {
+  return getVisibleSteps().indexOf(currentStep);
+}
+
+function showStep(stepNum) {
+  steps.forEach(s => s.classList.remove('active'));
+  const target = document.querySelector(`.step[data-step="${stepNum}"]`);
+  if (target) target.classList.add('active');
+  currentStep = stepNum;
+
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Update progress
+  const visible = getVisibleSteps();
+  const idx = visible.indexOf(stepNum);
+  if (stepNum === 0 || stepNum === 'done') {
+    progressWrap.style.display = 'none';
+  } else {
+    progressWrap.style.display = '';
+    const total = visible.length - 2; // exclude intro and done
+    const current = idx; // 1-based from visible (intro is 0)
+    const pct = Math.min(100, Math.round((current / total) * 100));
+    progressFill.style.width = pct + '%';
+    progressCount.textContent = current + ' / ' + total;
+
+    // Section labels
+    const sections = {
+      1: 'ご利用について', 2: '希少酒コースについて', 3: 'ご来店について',
+      4: 'ご来店のきっかけ', 5: 'ご来店のきっかけ',
+      6: '満足度', 7: '満足度', 8: 'スタッフについて', 9: 'スタッフについて', 10: 'スタッフについて',
+      11: 'お料理について', 12: 'お料理について', 13: 'お料理について', 14: 'お料理について',
+      15: '気になった点', 16: 'スタッフについて', 17: '清潔感について',
+      18: '再来店について', 19: '最後に', 20: '最後に'
+    };
+    progressLabel.textContent = sections[stepNum] || '';
+  }
+
+  // Button states
+  if (stepNum === 0) {
+    btnBack.style.display = 'none';
+    btnNext.textContent = 'アンケートを始める';
+    btnNext.className = 'btn btn-next';
+    btnNext.disabled = false;
+    footerNav.style.display = '';
+  } else if (stepNum === 'done') {
+    footerNav.style.display = 'none';
+  } else {
+    btnBack.style.display = '';
+    const isLast = idx === visible.length - 2; // last before "done"
+    // Check if this step is the last question step
+    const lastQuestionStep = visible[visible.length - 1];
+    if (stepNum === 20) {
+      btnNext.textContent = '送信する';
+      btnNext.className = 'btn btn-submit';
+    } else {
+      btnNext.textContent = '次へ';
+      btnNext.className = 'btn btn-next';
+    }
+    updateNextEnabled();
+  }
+}
+
+function updateNextEnabled() {
+  if (currentStep === 0) { btnNext.disabled = false; return; }
+  // Check required fields
+  const requiredSingle = {
+    1: 'usage', 2: 'kishu_reason', 3: 'visit_count',
+    4: 'awareness', 6: 'overall', 7: 'nps',
+    8: 'service', 9: 'smile', 10: 'sake_explain',
+    11: 'food_ordered', 12: 'food_taste', 13: 'food_volume',
+    14: 'food_explain', 18: 'revisit'
+  };
+  const requiredMulti = { 5: 'return_reason' };
+
+  if (requiredSingle[currentStep]) {
+    btnNext.disabled = !answers[requiredSingle[currentStep]];
+  } else if (requiredMulti[currentStep]) {
+    const arr = answers[requiredMulti[currentStep]];
+    btnNext.disabled = !arr || arr.length === 0;
+  } else {
+    btnNext.disabled = false;
+  }
+}
+
+function goNext() {
+  // Collect text inputs for current step
+  collectTextForStep(currentStep);
+
+  const visible = getVisibleSteps();
+  const idx = visible.indexOf(currentStep);
+
+  if (currentStep === 20) {
+    // Submit
+    console.log('Survey answers:', JSON.stringify(answers, null, 2));
+    showStep('done');
+    return;
+  }
+
+  if (idx < visible.length - 1) {
+    // Re-calc visible in case answers changed branching
+    const newVisible = getVisibleSteps();
+    const newIdx = newVisible.indexOf(currentStep);
+    if (newIdx < newVisible.length - 1) {
+      showStep(newVisible[newIdx + 1]);
+    }
+  }
+}
+
+function goBack() {
+  const visible = getVisibleSteps();
+  const idx = visible.indexOf(currentStep);
+  if (idx > 0) {
+    showStep(visible[idx - 1]);
+  }
+}
+
+function collectTextForStep(step) {
+  const textMap = {
+    2: ['kishu_brand'],
+    12: ['food_taste_note'],
+    13: ['food_volume_note'],
+    15: ['dissatisfied_other'],
+    16: ['great_staff'],
+    17: ['hygiene_other'],
+    19: ['dislike'],
+    20: ['comment']
+  };
+  if (textMap[step]) {
+    textMap[step].forEach(key => {
+      const el = document.getElementById('q_' + key);
+      if (el) answers[key] = el.value.trim();
+    });
+  }
+}
+
+btnNext.addEventListener('click', goNext);
+btnBack.addEventListener('click', goBack);
+
+// ── Single-choice handlers ──
+function setupSingleChoice(containerId, answerKey) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.querySelectorAll('.choice-item, .sat-btn, .yn-btn, .nps-btn').forEach(item => {
+    item.addEventListener('click', () => {
+      container.querySelectorAll('.choice-item, .sat-btn, .yn-btn, .nps-btn').forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+      answers[answerKey] = item.dataset.value;
+      updateNextEnabled();
+    });
+  });
+}
+
+// ── Multi-choice handlers ──
+function setupMultiChoice(containerId, answerKey) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.querySelectorAll('.choice-item').forEach(item => {
+    item.addEventListener('click', () => {
+      // "いずれも当てはまらない" exclusive logic
+      if (item.dataset.value === 'いずれも当てはまらない') {
+        container.querySelectorAll('.choice-item').forEach(i => {
+          if (i !== item) i.classList.remove('selected');
+        });
+        item.classList.toggle('selected');
+      } else {
+        // Deselect "none" if selecting something else
+        container.querySelectorAll('.choice-item').forEach(i => {
+          if (i.dataset.value === 'いずれも当てはまらない') i.classList.remove('selected');
+        });
+        item.classList.toggle('selected');
+      }
+      answers[answerKey] = Array.from(container.querySelectorAll('.choice-item.selected')).map(i => i.dataset.value);
+
+      // Show/hide "other" textarea
+      const otherWrap = document.getElementById(containerId.replace('q_', 'q_') + '_other_wrap');
+      if (otherWrap) {
+        otherWrap.style.display = answers[answerKey].includes('その他') ? '' : 'none';
+      }
+
+      updateNextEnabled();
+    });
+  });
+}
+
+// Setup all questions
+setupSingleChoice('q_usage', 'usage');
+setupSingleChoice('q_kishu_reason', 'kishu_reason');
+setupSingleChoice('q_visit_count', 'visit_count');
+setupSingleChoice('q_awareness', 'awareness');
+setupMultiChoice('q_return_reason', 'return_reason');
+setupSingleChoice('q_overall', 'overall');
+setupSingleChoice('q_nps', 'nps');
+setupSingleChoice('q_service', 'service');
+setupSingleChoice('q_smile', 'smile');
+setupSingleChoice('q_sake_explain', 'sake_explain');
+setupSingleChoice('q_food_ordered', 'food_ordered');
+setupSingleChoice('q_food_taste', 'food_taste');
+setupSingleChoice('q_food_volume', 'food_volume');
+setupSingleChoice('q_food_explain', 'food_explain');
+setupMultiChoice('q_dissatisfied', 'dissatisfied');
+setupMultiChoice('q_hygiene', 'hygiene');
+setupSingleChoice('q_revisit', 'revisit');
+
+// Show/hide "other" textareas for dissatisfied and hygiene
+['q_dissatisfied', 'q_hygiene'].forEach(id => {
+  const wrap = document.getElementById(id + '_other_wrap');
+  if (wrap) wrap.style.display = 'none';
+});
+
+// Init
+showStep(0);
+</script>
+</body>
+</html>
